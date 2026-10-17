@@ -1,0 +1,10 @@
+{
+  "name": "baito-cal2form",
+  "private": true,
+  "type": "module",
+  "description": "カレンダーで入れたシフト希望を、Googleフォームに書き写すための一覧にする",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node --test"
+  }
+}
