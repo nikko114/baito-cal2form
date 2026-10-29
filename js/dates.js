@@ -62,6 +62,23 @@ export function weekdayOrder(weekStartsOn) {
   return Array.from({ length: 7 }, (_, i) => (i + weekStartsOn) % 7);
 }
 
+// start から end まで（両端を含む）の日付の一覧
+export function dayRange(start, end) {
+  const days = [];
+  let { y, m, d } = parseYmd(start);
+  for (let ymd = start; ymd <= end; ymd = toYmd(y, m, d)) {
+    days.push(ymd);
+    if (++d > daysInMonth(y, m)) {
+      d = 1;
+      if (++m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+  }
+  return days;
+}
+
 // カレンダー表示用。1週7マスの配列の配列で、月の外のマスは null。
 export function monthWeeks(y, m, weekStartsOn) {
   const lead = (weekdayOf(y, m, 1) - weekStartsOn + 7) % 7;

@@ -105,6 +105,7 @@ textarea {
 
 input[type='text'],
 input[type='url'],
+input[type='date'],
 textarea,
 select {
   width: 100%;
@@ -112,6 +113,14 @@ select {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-2);
+}
+
+/* iPhone の日付入力は、そのままだと中身が空のとき高さがつぶれる */
+input[type='date'] {
+  min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
 }
 
 textarea {
@@ -943,6 +952,171 @@ button.wd {
   display: none;
 }
 
+/* 確定シフト */
+
+.wish-hint {
+  max-width: 100%;
+  padding: 1px 4px;
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.sheet-wish {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 2px 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.shift-editor {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.time-row select {
+  width: auto;
+  padding: 6px 8px;
+  background: var(--surface);
+}
+
+.dialog .time-row select {
+  background: var(--surface-2);
+}
+
+.shift-calc {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 給料 */
+
+.list-item .num-input {
+  width: 6.5em;
+  padding: 8px 10px;
+  text-align: right;
+}
+
+.unit {
+  color: var(--muted);
+}
+
+.pay-total .amount {
+  margin: 2px 0;
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.inline-banner {
+  align-items: center;
+  margin: 10px 0 0;
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.pay-rows {
+  margin: 4px 0 8px;
+}
+
+.pay-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.pay-row:first-child {
+  border-top: none;
+}
+
+.pay-row .amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pay-row.total {
+  border-top: 2px solid var(--text);
+  font-weight: 800;
+}
+
+.pay-day {
+  display: grid;
+  grid-template-columns: 5.8em minmax(0, 1fr) auto;
+  gap: 0 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.pay-day:first-child {
+  border-top: none;
+}
+
+.pay-day .date {
+  grid-row: 1 / span 2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-day .amount {
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  align-self: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 「3時間」などの途中で折り返さないように、項目の区切りでだけ折り返す */
+.pay-day .mins {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  gap: 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pay-day .mins > span {
+  white-space: nowrap;
+}
+
+.pay-note {
+  margin: 4px 4px 0;
+}
+
 /* 下のタブ */
 
 .tabbar {
@@ -952,7 +1126,7 @@ button.wd {
   left: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   /* PC では中身の幅（560px）にそろえる */
   padding: 0 max(env(safe-area-inset-right), calc((100% - 560px) / 2)) env(safe-area-inset-bottom)
     max(env(safe-area-inset-left), calc((100% - 560px) / 2));
@@ -993,21 +1167,26 @@ button.wd {
 
 /* トースト */
 
+/* left: 50% で寄せると幅が画面の半分までに縮むので、左右を決めて fit-content で真ん中に置く */
 .toast {
   position: fixed;
+  right: 16px;
   bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px);
-  left: 50%;
+  left: 16px;
   z-index: 60;
-  max-width: calc(100vw - 32px);
+  width: -webkit-fit-content;
+  width: fit-content;
+  max-width: 480px;
+  margin: 0 auto;
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: 18px;
   background: rgba(28, 28, 34, 0.92);
   color: #fff;
   font-size: 14px;
   text-align: center;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 12px);
+  transform: translateY(12px);
   transition:
     opacity 0.2s,
     transform 0.2s;
@@ -1015,7 +1194,7 @@ button.wd {
 
 .toast.show {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: none;
 }
 
 body.sheet-open .toast {

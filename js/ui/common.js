@@ -3,7 +3,8 @@
 import { currentMonthKey, addMonths, parseMonthKey } from '../dates.js';
 import { h, icon } from './dom.js';
 
-export function monthNav(state, actions) {
+// suffix: 給料画面では「11月分」のように後ろにつける
+export function monthNav(state, actions, { suffix = '' } = {}) {
   const { y, m } = parseMonthKey(state.month);
   const now = currentMonthKey();
   const relative =
@@ -12,7 +13,7 @@ export function monthNav(state, actions) {
     'div',
     { class: 'month-nav' },
     h('button', { class: 'icon-btn', 'aria-label': '前の月', onclick: () => actions.moveMonth(-1) }, icon('left', 22)),
-    h('h1', {}, `${y}年${m}月`, relative && h('span', { class: 'relative' }, relative)),
+    h('h1', {}, `${y}年${m}月${suffix}`, relative && h('span', { class: 'relative' }, relative)),
     h('button', { class: 'icon-btn', 'aria-label': '次の月', onclick: () => actions.moveMonth(1) }, icon('right', 22)),
   );
 }

@@ -61,17 +61,21 @@ export function icon(name, size = 20) {
   return svg;
 }
 
-// 選択肢の色つきラベル
-export function chip(option, { cell = false, large = false } = {}) {
-  const text = (cell && option.short) || option.label;
+// 色つきのラベル。cell: カレンダーのマスの中（長い文字は小さくする）
+export function colorChip(text, color, { cell = false, large = false } = {}) {
   return h(
     'span',
     {
       class: ['chip', large && 'large', cell && text.length > 3 && 'long'],
-      style: { background: option.color, color: textColorFor(option.color) },
+      style: { background: color, color: textColorFor(color) },
     },
     text,
   );
+}
+
+// 選択肢の色つきラベル
+export function chip(option, { cell = false, large = false } = {}) {
+  return colorChip((cell && option.short) || option.label, option.color, { cell, large });
 }
 
 export function weekdayClass(wd) {
