@@ -82,8 +82,8 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
       { id: 't3', name: '休憩長すぎ', start: 480, end: 540, breakMin: 60 },
     ],
     shifts: {
-      '2026-11-02': { start: 960, end: 1500, breakMin: 60, templateId: 'nope' },
-      '2026-11-03': { start: 480, end: 1020, breakMin: 60, templateId: 't1' },
+      '2026-11-02': { start: 960, end: 1500, breakMin: 60, templateId: 'nope', actual: { start: 962, end: 1531, breakMin: 60 } },
+      '2026-11-03': { start: 480, end: 1020, breakMin: 60, templateId: 't1', actual: { start: 600, end: 500, breakMin: 0 } }, // 実績がおかしい
       '2026-11-04': { start: '8:00', end: 1020, breakMin: 0 },
       '2026-11-31': { start: 480, end: 1020, breakMin: 0 },
     },
@@ -99,6 +99,7 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
       closingDay: 31,
       payMonthOffset: 1,
       payDay: 0,
+      rounding: 20, // 選べない単位
     },
   });
   assert.deepEqual(
@@ -106,7 +107,7 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
     [['t1', '#e8833a']],
   );
   assert.deepEqual(data.shifts, {
-    '2026-11-02': { start: 960, end: 1500, breakMin: 60, templateId: null },
+    '2026-11-02': { start: 960, end: 1500, breakMin: 60, templateId: null, actual: { start: 962, end: 1531, breakMin: 60 } },
     '2026-11-03': { start: 480, end: 1020, breakMin: 60, templateId: 't1' },
   });
   assert.deepEqual(data.pay, {
@@ -120,6 +121,7 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
     closingDay: 0,
     payMonthOffset: 1,
     payDay: 0,
+    rounding: 0,
   });
 });
 

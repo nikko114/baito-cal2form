@@ -2,7 +2,7 @@
 // localStorage にキー1つで JSON をまとめて保存する。
 
 import { DATE_FORMATS, isMonthKey, isYmd } from './dates.js';
-import { isValidTimes } from './pay.js';
+import { ROUNDING_CHOICES, isValidTimes } from './pay.js';
 
 export const STORAGE_KEY = 'baito-cal2form';
 
@@ -61,6 +61,7 @@ export function defaultPay() {
     closingDay: 0, // 締め日（0 = 月末）
     payMonthOffset: 1, // 給料日: 0 = 当月, 1 = 翌月, 2 = 翌々月
     payDay: 25, // 給料日の日（0 = 月末）
+    rounding: 0, // 出退勤の時刻の丸め（0 = 1分単位、15 / 30 = その単位で出勤は切り上げ・退勤は切り捨て）
   };
 }
 
@@ -72,7 +73,7 @@ export function defaultData() {
     pattern: [null, null, null, null, null, null, null], // 曜日パターン（0 = 日曜）
     months: {}, // "2026-11" -> { checked, memo, editUrl }
     templates: DEFAULT_TEMPLATES.map((t) => ({ id: newId(), ...t })),
-    shifts: {}, // "2026-11-02" -> { start, end, breakMin, templateId }（時刻は0時からの分）
+    shifts: {}, // "2026-11-02" -> { start, end, breakMin, templateId, actual? }（時刻は0時からの分。actual = 実際に働いた時間）
     pay: defaultPay(),
     settings: { weekStartsOn: 0, dateFormat: DATE_FORMATS[0], hideInstallTip: false },
   };
@@ -125,6 +126,7 @@ function normalizePay(raw) {
     closingDay: int(p.closingDay, 0, 27) ?? d.closingDay,
     payMonthOffset: int(p.payMonthOffset, 0, 2) ?? d.payMonthOffset,
     payDay: int(p.payDay, 0, 31) ?? d.payDay,
+    rounding: ROUNDING_CHOICES.includes(p.rounding) ? p.rounding : d.rounding,
   };
 }
 
@@ -194,6 +196,8 @@ export function normalize(raw) {
     for (const [ymd, s] of Object.entries(raw.shifts)) {
       if (!isYmd(ymd) || !isObject(s) || !times(s)) continue;
       shifts[ymd] = { ...times(s), templateId: templateIds.has(s.templateId) ? s.templateId : null };
+      // 実際に働いた時間（実績）。入っているときだけ持つ
+      if (isObject(s.actual) && times(s.actual)) shifts[ymd].actual = times(s.actual);
     }
   }
 

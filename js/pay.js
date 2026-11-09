@@ -16,7 +16,8 @@ const NIGHT_WINDOWS = [
 // 時刻の入力で選べる範囲
 export const START_HOURS = [0, 23];
 export const END_HOURS = [1, 30];
-export const BREAK_CHOICES = [0, 15, 30, 45, 60, 75, 90, 105, 120];
+// 出退勤の時刻の丸め（分）。0 = 丸めない
+export const ROUNDING_CHOICES = [0, 15, 30];
 
 // 8:00 / 25:00
 export function formatTime(min) {
@@ -95,12 +96,31 @@ export function paydayOf(monthKey, pay) {
   return toYmd(y, m, pay.payDay ? Math.min(pay.payDay, last) : last);
 }
 
+// 時刻の丸め: 出勤は切り上げ、退勤は切り捨て（例: 15分単位なら 16:02 → 16:15、25:31 → 25:30）
+export function roundTimes(times, rounding) {
+  if (!rounding) return { start: times.start, end: times.end, breakMin: times.breakMin };
+  return {
+    start: Math.ceil(times.start / rounding) * rounding,
+    end: Math.floor(times.end / rounding) * rounding,
+    breakMin: times.breakMin,
+  };
+}
+
+// 給料の計算に使う時間。実際の時間（実績）が入っていればそちらを使う
+export function effectiveTimes(shift, rounding = 0) {
+  return roundTimes(shift.actual ?? shift, rounding);
+}
+
 // 1日分の時給・時間・金額（金額は端数を丸める前）
 export function dayPay(pay, ymd, shift) {
-  const minutes = shiftMinutes(shift, { night: pay.nightPremium, overtime: pay.overtimePremium });
+  const rules = { night: pay.nightPremium, overtime: pay.overtimePremium };
+  const times = effectiveTimes(shift, pay.rounding);
+  const minutes = shiftMinutes(times, rules);
   const hourly = wageOn(pay, ymd);
   const amount = (hourly * (minutes.work + NIGHT_PREMIUM * minutes.night + OVERTIME_PREMIUM * minutes.overtime)) / 60;
-  return { hourly, ...minutes, amount };
+  // 実績があるとき、予定と比べた勤務時間の差（分）
+  const diff = shift.actual ? minutes.work - shiftMinutes(roundTimes(shift, pay.rounding), rules).work : 0;
+  return { hourly, ...minutes, amount, times, actual: Boolean(shift.actual), diff };
 }
 
 // start〜end の確定シフトから給料を計算する。
@@ -132,6 +152,7 @@ export function payForRange(data, start, end) {
     days,
     wages,
     workDays: days.length,
+    actualDays: days.filter((d) => d.actual).length,
     workMinutes: sum('work'),
     nightMinutes: sum('night'),
     overtimeMinutes: sum('overtime'),
@@ -163,7 +184,10 @@ export function shiftsText(data, monthKey) {
   const lines = [`${y}年${m}月のシフト`];
   for (let d = 1; d <= daysInMonth(y, m); d++) {
     const shift = data.shifts[toYmd(y, m, d)];
-    if (shift) lines.push(`${formatDay(y, m, d, data.settings.dateFormat)} ${formatRange(shift)}`);
+    if (shift) {
+      const actual = shift.actual ? `（実際 ${formatRange(shift.actual)}）` : '';
+      lines.push(`${formatDay(y, m, d, data.settings.dateFormat)} ${formatRange(shift)}${actual}`);
+    }
   }
   if (lines.length === 1) lines.push('（まだない）');
   return lines.join('\n');

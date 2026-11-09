@@ -1,7 +1,8 @@
 {
+  "id": "./",
   "name": "シフト転記",
   "short_name": "シフト転記",
-  "description": "カレンダーで入れたシフト希望を、Googleフォームに書き写すための一覧にする",
+  "description": "カレンダーで入れたシフト希望をGoogleフォームに書き写す一覧にし、確定シフトから給料の見込みも出す",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
@@ -9,8 +10,9 @@
   "background_color": "#f3f3f7",
   "theme_color": "#f3f3f7",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

@@ -3,6 +3,8 @@ process.env.TZ = 'Asia/Tokyo';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  dayPay,
+  effectiveTimes,
   formatDuration,
   formatRange,
   formatYen,
@@ -170,4 +172,41 @@ test('年の合計は給料日がその年に入る分だけ', () => {
 test('シフトのコピー用テキスト', () => {
   assert.equal(shiftsText(sample(), '2026-11'), '2026年11月のシフト\n2日(月) 16:00〜25:00\n4日(水) 8:00〜17:00\n5日(木) 18:00〜25:00');
   assert.equal(shiftsText(sample(), '2027-02'), '2027年2月のシフト\n（まだない）');
+});
+
+test('実績があれば実績の時間で計算し、予定との差も出す', () => {
+  const pay = { ...defaultPay(), wages: [{ from: '', hourly: 1100 }] };
+  const planned = shift(t(16), t(25), 60);
+  const worked = { ...planned, actual: { start: t(16, 2), end: t(25, 31), breakMin: 60 } };
+  const day = dayPay(pay, '2026-11-02', worked);
+  assert.equal(day.actual, true);
+  assert.equal(day.work, 509); // 8時間29分
+  assert.equal(day.night, 211); // 22:00〜25:31
+  assert.equal(day.diff, 29);
+  assert.equal(day.overtime, 29); // 8時間を超えた29分
+  assert.equal(Math.round(day.amount), Math.round((1100 * (509 + 0.25 * 211 + 0.25 * 29)) / 60));
+  assert.equal(dayPay(pay, '2026-11-02', planned).actual, false);
+});
+
+test('時刻の丸め: 出勤は切り上げ、退勤は切り捨て', () => {
+  const worked = { ...shift(t(16), t(25), 60), actual: { start: t(16, 2), end: t(25, 31), breakMin: 60 } };
+  assert.deepEqual(effectiveTimes(worked, 0), { start: t(16, 2), end: t(25, 31), breakMin: 60 });
+  assert.deepEqual(effectiveTimes(worked, 15), { start: t(16, 15), end: t(25, 30), breakMin: 60 });
+  assert.deepEqual(effectiveTimes(worked, 30), { start: t(16, 30), end: t(25, 30), breakMin: 60 });
+  // 実績がなければ予定の時間
+  assert.deepEqual(effectiveTimes(shift(t(17, 30), t(25), 45), 30), { start: t(17, 30), end: t(25), breakMin: 45 });
+  const pay = { ...defaultPay(), wages: [{ from: '', hourly: 1100 }], rounding: 15 };
+  const day = dayPay(pay, '2026-11-02', worked);
+  assert.equal(day.work, 495); // 16:15〜25:30 − 1時間
+  assert.equal(day.diff, 15);
+});
+
+test('月の集計に実績の日数が入る', () => {
+  const data = sample();
+  data.shifts['2026-11-04'] = { ...data.shifts['2026-11-04'], actual: { start: t(8), end: t(17, 30), breakMin: 60 } };
+  const p = periodPay(data, '2026-11');
+  assert.equal(p.actualDays, 1);
+  assert.equal(p.workMinutes, 480 + 510 + 375);
+  assert.equal(p.base, Math.round((1100 * (480 + 510 + 375)) / 60));
+  assert.match(shiftsText(data, '2026-11'), /4日\(水\) 8:00〜17:00（実際 8:00〜17:30）/);
 });

@@ -36,14 +36,18 @@ export function renderShifts({ state, actions }) {
           const wd = order[i];
           const shift = data.shifts[ymd];
           const wish = options.get(data.entries[ymd]);
+          const label = shift
+            ? `${formatRange(shift)}${shift.actual ? ` 実績 ${formatRange(shift.actual)}` : ''}`
+            : `シフトなし${wish ? `（希望 ${wish.label}）` : ''}`;
           return h(
             'button',
             {
               class: ['cell', weekdayClass(wd), ymd === today && 'today', ymd === state.shiftDate && 'selected'],
-              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日 ${shift ? formatRange(shift) : 'シフトなし'}${wish ? `（希望 ${wish.label}）` : ''}`,
+              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日 ${label}`,
               onclick: () => actions.tapShiftDay(ymd),
             },
             h('span', { class: 'num' }, d),
+            shift?.actual && h('span', { class: 'done-badge', 'aria-hidden': 'true' }, icon('check', 10)),
             shift
               ? shiftChip(shift, templates, { cell: true })
               : wish
@@ -58,7 +62,7 @@ export function renderShifts({ state, actions }) {
   const summary = h(
     'div',
     { class: 'cal-summary' },
-    h('span', {}, `出勤 ${sum.workDays}日`),
+    h('span', {}, `出勤 ${sum.workDays}日`, sum.workDays > 0 && `（実績 ${sum.actualDays}日）`),
     h('span', {}, `計 ${formatDuration(sum.workMinutes)}`),
     sum.nightMinutes > 0 && h('span', {}, `うち深夜 ${formatDuration(sum.nightMinutes)}`),
     hasWage
@@ -73,7 +77,11 @@ export function renderShifts({ state, actions }) {
     monthNav(state, actions),
     h('div', { class: 'cal' }, head, body),
     summary,
-    h('p', { class: 'hint tool-hint' }, '日付をタップして、決まったシフトの時間を入れる。マスの点線の文字は、出した希望'),
+    h(
+      'p',
+      { class: 'hint tool-hint' },
+      '日付をタップして、決まったシフトを入れる。働いた日は実際の時間も入れると、給料の見込みが実際に近くなる（入れた日は ✓）。マスの点線の文字は、出した希望',
+    ),
     h(
       'div',
       { class: 'toolbar' },

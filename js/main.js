@@ -25,6 +25,7 @@ const state = {
   sheetDate: null, // 希望のパネルを開いている日
   undo: [], // 元に戻す用（entries の履歴）
   shiftDate: null, // 確定シフトのパネルを開いている日
+  shiftEditing: false, // 確定シフトのパネルで、予定を直す欄を開いているか
   shiftUndo: [], // 元に戻す用（shifts の履歴）
 };
 
@@ -75,6 +76,7 @@ const actions = {
     state.tab = tab;
     state.sheetDate = null;
     state.shiftDate = null;
+    state.shiftEditing = false;
     render();
     window.scrollTo(0, 0);
     if (tab === 'list') scrollToNextUnchecked();
@@ -83,6 +85,7 @@ const actions = {
     state.month = addMonths(state.month, delta);
     state.sheetDate = null;
     state.shiftDate = null;
+    state.shiftEditing = false;
     render();
   },
   setMode(mode) {
@@ -132,6 +135,7 @@ const actions = {
   },
   // 確定シフト
   tapShiftDay(ymd) {
+    if (state.shiftDate !== ymd) state.shiftEditing = false;
     state.shiftDate = ymd;
     render();
   },
@@ -139,16 +143,28 @@ const actions = {
     const next = stepDay(state.shiftDate, delta);
     if (!next) return;
     state.shiftDate = next;
+    state.shiftEditing = false;
     render();
   },
   closeShiftSheet() {
     state.shiftDate = null;
+    state.shiftEditing = false;
+    render();
+  },
+  toggleShiftEditing() {
+    state.shiftEditing = !state.shiftEditing;
     render();
   },
   applyTemplate(templateId) {
     const t = state.data.templates.find((x) => x.id === templateId);
     if (!t || !state.shiftDate) return;
-    setShifts({ ...state.data.shifts, [state.shiftDate]: { start: t.start, end: t.end, breakMin: t.breakMin, templateId: t.id } });
+    // 実際の時間（実績）が入っていれば残す
+    const current = state.data.shifts[state.shiftDate] ?? {};
+    setShifts({
+      ...state.data.shifts,
+      [state.shiftDate]: { ...current, start: t.start, end: t.end, breakMin: t.breakMin, templateId: t.id },
+    });
+    state.shiftEditing = false;
     render();
   },
   addCustomShift() {
@@ -174,6 +190,37 @@ const actions = {
     const shifts = { ...state.data.shifts };
     delete shifts[state.shiftDate];
     setShifts(shifts);
+    state.shiftEditing = false;
+    render();
+  },
+  // 実際に働いた時間（実績）
+  markWorkedAsPlanned() {
+    const shift = state.data.shifts[state.shiftDate];
+    if (!shift) return;
+    setShifts({
+      ...state.data.shifts,
+      [state.shiftDate]: { ...shift, actual: { start: shift.start, end: shift.end, breakMin: shift.breakMin } },
+    });
+    render();
+  },
+  updateActual(patch) {
+    const shift = state.data.shifts[state.shiftDate];
+    if (!shift?.actual) return;
+    const actual = { ...shift.actual, ...patch };
+    if (!isValidTimes(actual)) {
+      toast('退勤は出勤より後に、休憩は勤務時間より短くしてね');
+      render(); // セレクトを元の値に戻す
+      return;
+    }
+    setShifts({ ...state.data.shifts, [state.shiftDate]: { ...shift, actual } });
+    render();
+  },
+  removeActual() {
+    const shift = state.data.shifts[state.shiftDate];
+    if (!shift?.actual) return;
+    const planned = { ...shift };
+    delete planned.actual;
+    setShifts({ ...state.data.shifts, [state.shiftDate]: planned });
     render();
   },
   undoShift() {
@@ -228,7 +275,7 @@ const actions = {
         const shifts = { ...state.data.shifts };
         for (const [ymd, s] of linked) {
           shifts[ymd] = update
-            ? { start: template.start, end: template.end, breakMin: template.breakMin, templateId: template.id }
+            ? { ...s, start: template.start, end: template.end, breakMin: template.breakMin, templateId: template.id }
             : { ...s, templateId: null };
         }
         setShifts(shifts);
@@ -378,6 +425,7 @@ const actions = {
     state.shiftUndo = [];
     state.sheetDate = null;
     state.shiftDate = null;
+    state.shiftEditing = false;
     state.brush = null;
     persist();
     render();

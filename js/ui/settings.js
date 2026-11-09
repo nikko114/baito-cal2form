@@ -13,7 +13,7 @@ import {
   toYmd,
   weekdayOrder,
 } from '../dates.js';
-import { END_HOURS, START_HOURS, formatDuration, formatRange, isValidTimes, shortRange } from '../pay.js';
+import { END_HOURS, ROUNDING_CHOICES, START_HOURS, formatDuration, formatRange, isValidTimes, shortRange } from '../pay.js';
 import { PALETTE, defaultData, exportJson, importJson } from '../store.js';
 import { copyText, downloadText, notice, openDialog, toast } from './common.js';
 import { chip, colorChip, h, icon, weekdayClass } from './dom.js';
@@ -295,7 +295,7 @@ function paySection(data, actions) {
   const days = Array.from({ length: 31 }, (_, i) => [i + 1, `${i + 1}日`]);
   return section(
     '給料',
-    '確定シフトから給料の見込みを出すときに使う',
+    '確定シフトから給料の見込みを出すときに使う。時刻の丸めは、給与明細が15分単位などで計算されているときだけ選ぶ（出勤は切り上げ・退勤は切り捨て）',
     h(
       'div',
       { class: 'list' },
@@ -364,6 +364,17 @@ function paySection(data, actions) {
         { class: 'list-item' },
         h('label', { class: 'grow', for: 'pay-closing' }, '締め日'),
         select('pay-closing', pay.closingDay, [[0, '月末'], ...days.slice(0, 27)], (v) => actions.setPay('closingDay', v)),
+      ),
+      h(
+        'div',
+        { class: 'list-item' },
+        h('label', { class: 'grow', for: 'pay-rounding' }, '出退勤の時刻の丸め'),
+        select(
+          'pay-rounding',
+          pay.rounding,
+          ROUNDING_CHOICES.map((r) => [r, r ? `${r}分単位` : 'なし（1分単位）']),
+          (v) => actions.setPay('rounding', v),
+        ),
       ),
       h(
         'div',

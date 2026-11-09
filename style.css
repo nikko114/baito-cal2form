@@ -362,6 +362,7 @@ button.wd {
 }
 
 .cell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -450,6 +451,15 @@ button.wd {
   letter-spacing: -0.03em;
 }
 
+.chip.two-line {
+  flex-direction: column;
+  height: auto;
+  padding: 2px 3px;
+  font-size: 10.5px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
 .chip.large {
   min-width: 36px;
   height: 30px;
@@ -522,6 +532,10 @@ button.wd {
   max-width: 560px;
   margin: 0 auto;
   padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+  max-height: 82vh;
+  max-height: 82dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 18px 18px 0 0;
   background: var(--surface);
   box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.18);
@@ -1014,6 +1028,105 @@ button.wd {
 .shift-calc {
   color: var(--muted);
   font-size: 13px;
+}
+
+/* 確定シフトの実績 */
+
+.done-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: #fff;
+}
+
+.sheet-section {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.sheet-section .opt-grid {
+  margin-top: 10px;
+}
+
+.sheet-section .opt-btn,
+.sheet-section .shift-editor {
+  background: var(--surface);
+}
+
+.sheet-section .shift-editor {
+  margin-top: 10px;
+}
+
+.sheet-section .shift-editor select {
+  background: var(--surface-2);
+}
+
+.sheet-section > .hint {
+  margin-top: 6px;
+}
+
+.section-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.plan-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.plan-text > span {
+  white-space: nowrap;
+}
+
+.section-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sheet-section.actual {
+  box-shadow: inset 3px 0 0 var(--ok);
+}
+
+.sheet-note {
+  margin: 10px 2px 0;
+}
+
+.tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  vertical-align: 2px;
+}
+
+.tag.actual {
+  background: #dcf3e4;
+  color: var(--ok);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tag.actual {
+    background: #1d3a27;
+  }
 }
 
 /* 給料 */

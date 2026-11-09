@@ -27,6 +27,14 @@ export function renderSalary({ state, actions }) {
     h('p', { class: 'hint' }, '見込み（税金などが引かれる前）'),
     h('p', { class: 'amount' }, formatYen(p.total)),
     h('p', { class: 'hint' }, `${monthDay(p.period.start)}〜${monthDay(p.period.end)} の勤務 ・ ${monthDay(p.payday)} 支払い`),
+    p.workDays > 0 &&
+      h(
+        'p',
+        { class: 'hint' },
+        p.actualDays === p.workDays
+          ? '全部の日を実際の時間（実績）で計算'
+          : `実績 ${p.actualDays}日 ＋ 予定 ${p.workDays - p.actualDays}日 で計算。働いた日に実際の時間を入れると、より実際に近くなる`,
+      ),
     !hasWage &&
       h(
         'div',
@@ -54,7 +62,7 @@ export function renderSalary({ state, actions }) {
         ),
       ),
       yearCard(yp),
-      note(),
+      note(data.pay),
     );
   }
 
@@ -87,14 +95,20 @@ export function renderSalary({ state, actions }) {
           'div',
           { class: 'pay-day' },
           h('span', { class: ['date', weekdayClass(weekdayOf(y, m, d))] }, formatDay(y, m, d, 'M/D(W)')),
-          h('span', {}, formatRange(day.shift)),
+          h(
+            'span',
+            { class: 'range' },
+            h('span', { class: ['tag', day.actual && 'actual'] }, day.actual ? '実績' : '予定'),
+            formatRange(day.shift.actual ?? day.shift),
+          ),
           h('span', { class: 'amount' }, formatYen(day.amount)),
           h(
             'span',
             { class: 'mins' },
             h('span', {}, formatDuration(day.work)),
             day.night > 0 && h('span', {}, `深夜 ${formatDuration(day.night)}`),
-            h('span', {}, `休憩 ${day.shift.breakMin ? formatDuration(day.shift.breakMin) : 'なし'}`),
+            h('span', {}, `休憩 ${day.times.breakMin ? formatDuration(day.times.breakMin) : 'なし'}`),
+            day.diff !== 0 && h('span', {}, `予定より ${day.diff > 0 ? '+' : '−'}${formatDuration(Math.abs(day.diff))}`),
           ),
         );
       }),
@@ -110,7 +124,7 @@ export function renderSalary({ state, actions }) {
     breakdown,
     days,
     yearCard(yp),
-    note(),
+    note(data.pay),
   );
 }
 
@@ -131,11 +145,13 @@ function yearCard(yp) {
   );
 }
 
-function note() {
+function note(pay) {
   return h(
     'p',
     { class: 'hint pay-note' },
-    '深夜（22時〜翌5時）と、1日8時間を超えた分は25%増しで計算（設定で変えられる）。休憩は深夜以外の時間から取ったものとして計算。' +
-      '給与明細と合わないときは、設定の時給・交通費・締め日と、勤務パターンの休憩を見直してね',
+    '実際の時間（実績）を入れた日は実績で、まだの日は予定の時間で計算。' +
+      (pay.rounding ? `出退勤は${pay.rounding}分単位に丸めて計算（出勤は切り上げ・退勤は切り捨て）。` : '') +
+      '深夜（22時〜翌5時）と、1日8時間を超えた分は25%増し（設定で変えられる）。休憩は深夜以外の時間から取ったものとして計算。' +
+      '給与明細と合わないときは、設定の時給・交通費・締め日・時刻の丸めと、休憩を見直してね',
   );
 }
