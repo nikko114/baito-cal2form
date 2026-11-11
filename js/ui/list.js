@@ -3,7 +3,7 @@
 import { DATE_FORMATS, formatDay, parseMonthKey } from '../dates.js';
 import { monthRows, monthStats, monthText } from '../logic.js';
 import { copyText, monthNav, notice, toast } from './common.js';
-import { chip, h, icon, weekdayClass } from './dom.js';
+import { chip, dateClass, h, icon } from './dom.js';
 
 export function renderList({ state, actions }) {
   const { data } = state;
@@ -58,7 +58,7 @@ export function renderList({ state, actions }) {
             'aria-pressed': String(r.checked),
             onclick: () => actions.toggleCheck(r.d),
           },
-          h('span', { class: ['date', weekdayClass(r.wd)] }, formatDay(y, m, r.d, format)),
+          h('span', { class: ['date', dateClass(y, m, r.d)] }, formatDay(y, m, r.d, format)),
           h('span', { class: 'value' }, r.option ? chip(r.option, { large: true }) : '未入力'),
           h('span', { class: 'check', 'aria-hidden': 'true' }, r.checked && icon('check', 16)),
         ),

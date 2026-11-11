@@ -4,7 +4,8 @@
 import { WEEKDAYS, daysInMonth, parseYmd, todayYmd, weekdayOf } from '../dates.js';
 import { optionMap } from '../logic.js';
 import { END_HOURS, START_HOURS, dayPay, formatDuration, formatRange, formatYen, shortRange } from '../pay.js';
-import { chip, colorChip, h, icon, weekdayClass } from './dom.js';
+import { holidayTag } from './common.js';
+import { chip, colorChip, dateClass, h, icon } from './dom.js';
 import { breakSelect, shiftChip, timePicker } from './shift-parts.js';
 
 export function renderShiftSheet({ state, actions }) {
@@ -22,7 +23,13 @@ export function renderShiftSheet({ state, actions }) {
       'div',
       { class: 'sheet-head' },
       h('button', { class: 'icon-btn', 'aria-label': '前の日', disabled: d <= 1, onclick: () => actions.shiftStep(-1) }, icon('left', 22)),
-      h('div', { class: 'sheet-title' }, `${m}月${d}日`, h('span', { class: ['sheet-wd', weekdayClass(wd)] }, `(${WEEKDAYS[wd]})`)),
+      h(
+        'div',
+        { class: 'sheet-title' },
+        `${m}月${d}日`,
+        h('span', { class: ['sheet-wd', dateClass(y, m, d)] }, `(${WEEKDAYS[wd]})`),
+        holidayTag(ymd),
+      ),
       h(
         'button',
         { class: 'icon-btn', 'aria-label': '次の日', disabled: d >= daysInMonth(y, m), onclick: () => actions.shiftStep(1) },
@@ -76,6 +83,7 @@ function calcText(day) {
     formatDuration(day.work),
     day.night > 0 && `（深夜 ${formatDuration(day.night)}）`,
     day.hourly > 0 && ` ・ ${formatYen(day.amount)}`,
+    day.bonus > 0 && `（土日祝 +${formatYen(day.bonus)}）`,
   ];
 }
 

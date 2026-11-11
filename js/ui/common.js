@@ -1,7 +1,20 @@
 // 画面をまたいで使う部品（月の切り替え、お知らせ、トースト、ダイアログ、コピー）
 
 import { currentMonthKey, addMonths, parseMonthKey } from '../dates.js';
+import { holidayName } from '../holidays.js';
 import { h, icon } from './dom.js';
+
+// 読み上げ用の「 祝日（文化の日）」。祝日でなければ空
+export function holidayLabel(ymd) {
+  const name = holidayName(ymd);
+  return name ? ` 祝日（${name}）` : '';
+}
+
+// パネルの見出しの横に出す祝日の名前
+export function holidayTag(ymd) {
+  const name = holidayName(ymd);
+  return name && h('span', { class: 'holiday-name' }, name);
+}
 
 // suffix: 給料画面では「11月分」のように後ろにつける
 export function monthNav(state, actions, { suffix = '' } = {}) {

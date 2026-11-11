@@ -100,6 +100,7 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
       payMonthOffset: 1,
       payDay: 0,
       rounding: 20, // 選べない単位
+      bonus: { amount: -100, sat: false }, // マイナスは捨てる
     },
   });
   assert.deepEqual(
@@ -122,6 +123,7 @@ test('確定シフト・勤務パターン・給料の設定のおかしな値�
     payMonthOffset: 1,
     payDay: 0,
     rounding: 0,
+    bonus: { amount: 0, sat: false, sun: true, holiday: true },
   });
 });
 

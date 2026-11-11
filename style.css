@@ -159,7 +159,8 @@ main {
   font-weight: 700;
 }
 
-.sun {
+.sun,
+.holiday {
   color: var(--sun);
 }
 
@@ -389,7 +390,8 @@ button.wd {
   line-height: 18px;
 }
 
-.cell.sun .num {
+.cell.sun .num,
+.cell.holiday .num {
   color: var(--sun);
 }
 
@@ -565,6 +567,33 @@ button.wd {
   font-size: 18px;
   font-weight: 700;
   text-align: center;
+}
+
+.holiday-name {
+  display: block;
+  color: var(--sun);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.bonus-days {
+  flex-wrap: wrap;
+}
+
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  font-size: 15px;
+}
+
+.inline-check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .opt-grid {

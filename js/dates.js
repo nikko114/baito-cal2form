@@ -43,6 +43,13 @@ export function weekdayOf(y, m, d) {
   return new Date(y, m - 1, d).getDay();
 }
 
+// ymd の n 日後（n がマイナスなら前）
+export function addDays(ymd, n) {
+  const { y, m, d } = parseYmd(ymd);
+  const date = new Date(y, m - 1, d + n);
+  return toYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
 export function addMonths(key, n) {
   const { y, m } = parseMonthKey(key);
   const index = y * 12 + (m - 1) + n;

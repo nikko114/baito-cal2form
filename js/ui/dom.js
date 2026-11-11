@@ -2,7 +2,8 @@
 // 文字列はすべてテキストノードとして入れる（innerHTML は使わない）。
 
 import { textColorFor } from '../logic.js';
-import { WEEKDAYS } from '../dates.js';
+import { WEEKDAYS, toYmd, weekdayOf } from '../dates.js';
+import { holidayName } from '../holidays.js';
 
 export function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
@@ -80,6 +81,11 @@ export function chip(option, { cell = false, large = false } = {}) {
 
 export function weekdayClass(wd) {
   return wd === 0 ? 'sun' : wd === 6 ? 'sat' : null;
+}
+
+// 日付の色分け用。祝日は日曜と同じ色にする
+export function dateClass(y, m, d) {
+  return holidayName(toYmd(y, m, d)) ? 'holiday' : weekdayClass(weekdayOf(y, m, d));
 }
 
 export function weekdayLabel(wd) {

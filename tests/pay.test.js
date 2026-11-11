@@ -3,6 +3,7 @@ process.env.TZ = 'Asia/Tokyo';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  bonusOn,
   dayPay,
   effectiveTimes,
   formatDuration,
@@ -141,8 +142,8 @@ test('途中で時給が変わると、時給ごとに分けて計算する', ()
   });
   const p = periodPay(data, '2026-11');
   assert.deepEqual(p.wages, [
-    { hourly: 1000, minutes: 480, amount: 8000 },
-    { hourly: 1100, minutes: 855, amount: 15675 },
+    { hourly: 1000, bonus: false, minutes: 480, amount: 8000 },
+    { hourly: 1100, bonus: false, minutes: 855, amount: 15675 },
   ]);
   assert.equal(p.base, 23675);
   assert.equal(p.night, 1575); // 1000 × 25% × 3時間 + 1100 × 25% × 3時間
@@ -209,4 +210,40 @@ test('月の集計に実績の日数が入る', () => {
   assert.equal(p.workMinutes, 480 + 510 + 375);
   assert.equal(p.base, Math.round((1100 * (480 + 510 + 375)) / 60));
   assert.match(shiftsText(data, '2026-11'), /4日\(水\) 8:00〜17:00（実際 8:00〜17:30）/);
+});
+
+test('土日祝の時給アップは、土曜・日曜・祝日だけ（対象は選べる）', () => {
+  const pay = { ...defaultPay(), bonus: { amount: 100, sat: true, sun: true, holiday: true } };
+  assert.equal(bonusOn(pay, '2026-11-02'), 0); // 月曜
+  assert.equal(bonusOn(pay, '2026-11-03'), 100); // 文化の日（火曜）
+  assert.equal(bonusOn(pay, '2026-11-07'), 100); // 土曜
+  assert.equal(bonusOn(pay, '2026-11-08'), 100); // 日曜
+  const noHoliday = { ...pay, bonus: { ...pay.bonus, holiday: false } };
+  assert.equal(bonusOn(noHoliday, '2026-11-03'), 0);
+  assert.equal(bonusOn(noHoliday, '2026-11-08'), 100);
+  const sundayOnly = { ...pay, bonus: { amount: 100, sat: false, sun: true, holiday: false } };
+  assert.equal(bonusOn(sundayOnly, '2026-11-07'), 0);
+  assert.equal(bonusOn(sundayOnly, '2026-11-08'), 100);
+  assert.equal(bonusOn(defaultPay(), '2026-11-08'), 0); // 初期値は0円
+});
+
+test('土日祝の日は時給に足して、深夜の割増もその時給で計算する', () => {
+  const data = {
+    shifts: {
+      '2026-11-02': shift(t(8), t(17), 60), // 月曜
+      '2026-11-03': shift(t(8), t(17), 60), // 文化の日
+      '2026-11-07': shift(t(8), t(17), 60), // 土曜
+      '2026-11-08': shift(t(16), t(25), 60), // 日曜（深夜3時間）
+    },
+    pay: { ...defaultPay(), wages: [{ from: '', hourly: 1000 }], bonus: { amount: 100, sat: true, sun: true, holiday: true } },
+    settings: { dateFormat: 'D日(W)' },
+  };
+  const p = periodPay(data, '2026-11');
+  assert.deepEqual(p.wages, [
+    { hourly: 1000, bonus: false, minutes: 480, amount: 8000 },
+    { hourly: 1100, bonus: true, minutes: 1440, amount: 26400 },
+  ]);
+  assert.equal(p.night, 825); // 1100円 × 25% × 3時間
+  assert.equal(p.total, 8000 + 26400 + 825);
+  assert.equal(p.days.find((d) => d.ymd === '2026-11-08').bonus, 100);
 });

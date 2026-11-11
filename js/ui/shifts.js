@@ -3,8 +3,8 @@
 import { WEEKDAYS, daysInMonth, monthWeeks, parseMonthKey, todayYmd, toYmd, weekdayOrder } from '../dates.js';
 import { optionMap } from '../logic.js';
 import { formatDuration, formatRange, formatYen, payForRange, shiftsText } from '../pay.js';
-import { copyText, monthNav, notice, toast } from './common.js';
-import { h, icon, weekdayClass } from './dom.js';
+import { copyText, holidayLabel, monthNav, notice, toast } from './common.js';
+import { dateClass, h, icon, weekdayClass } from './dom.js';
 import { shiftChip } from './shift-parts.js';
 
 export function renderShifts({ state, actions }) {
@@ -42,8 +42,8 @@ export function renderShifts({ state, actions }) {
           return h(
             'button',
             {
-              class: ['cell', weekdayClass(wd), ymd === today && 'today', ymd === state.shiftDate && 'selected'],
-              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日 ${label}`,
+              class: ['cell', dateClass(y, m, d), ymd === today && 'today', ymd === state.shiftDate && 'selected'],
+              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日${holidayLabel(ymd)} ${label}`,
               onclick: () => actions.tapShiftDay(ymd),
             },
             h('span', { class: 'num' }, d),

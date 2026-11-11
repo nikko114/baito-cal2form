@@ -295,7 +295,8 @@ function paySection(data, actions) {
   const days = Array.from({ length: 31 }, (_, i) => [i + 1, `${i + 1}日`]);
   return section(
     '給料',
-    '確定シフトから給料の見込みを出すときに使う。時刻の丸めは、給与明細が15分単位などで計算されているときだけ選ぶ（出勤は切り上げ・退勤は切り捨て）',
+    '確定シフトから給料の見込みを出すときに使う。土日祝の時給アップは、その日の時給に足して計算する（深夜・残業の割増も、足したあとの時給にかかる）。' +
+      '時刻の丸めは、給与明細が15分単位などで計算されているときだけ選ぶ（出勤は切り上げ・退勤は切り捨て）',
     h(
       'div',
       { class: 'list' },
@@ -328,6 +329,36 @@ function paySection(data, actions) {
           { class: 'btn small', onclick: () => addWageDialog(actions) },
           icon('plus', 16),
           '時給が変わる日を追加（研修明け・昇給など）',
+        ),
+      ),
+      h(
+        'div',
+        { class: 'list-item' },
+        h('label', { class: 'grow', for: 'pay-bonus' }, '土日祝の時給アップ'),
+        h('span', { class: 'unit' }, '+'),
+        yenInput('pay-bonus', pay.bonus.amount, (v) => actions.setBonus('amount', v)),
+        h('span', { class: 'unit' }, '円'),
+      ),
+      h(
+        'div',
+        { class: 'list-item bonus-days' },
+        h('span', { class: 'grow' }, '時給アップの日'),
+        [
+          ['sat', '土曜'],
+          ['sun', '日曜'],
+          ['holiday', '祝日'],
+        ].map(([key, label]) =>
+          h(
+            'label',
+            { class: 'inline-check', for: `pay-bonus-${key}` },
+            h('input', {
+              type: 'checkbox',
+              id: `pay-bonus-${key}`,
+              checked: pay.bonus[key],
+              onchange: (e) => actions.setBonus(key, e.target.checked),
+            }),
+            label,
+          ),
         ),
       ),
       h(

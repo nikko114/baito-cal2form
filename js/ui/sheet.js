@@ -1,7 +1,8 @@
 // 日付をタップしたときに下から出る、選択肢のパネル
 
 import { WEEKDAYS, daysInMonth, parseYmd, weekdayOf } from '../dates.js';
-import { chip, h, icon, weekdayClass } from './dom.js';
+import { holidayTag } from './common.js';
+import { chip, dateClass, h, icon } from './dom.js';
 
 export function renderSheet({ state, actions }) {
   const { data } = state;
@@ -16,7 +17,13 @@ export function renderSheet({ state, actions }) {
       'div',
       { class: 'sheet-head' },
       h('button', { class: 'icon-btn', 'aria-label': '前の日', disabled: d <= 1, onclick: () => actions.sheetStep(-1) }, icon('left', 22)),
-      h('div', { class: 'sheet-title' }, `${m}月${d}日`, h('span', { class: ['sheet-wd', weekdayClass(wd)] }, `(${WEEKDAYS[wd]})`)),
+      h(
+        'div',
+        { class: 'sheet-title' },
+        `${m}月${d}日`,
+        h('span', { class: ['sheet-wd', dateClass(y, m, d)] }, `(${WEEKDAYS[wd]})`),
+        holidayTag(state.sheetDate),
+      ),
       h(
         'button',
         { class: 'icon-btn', 'aria-label': '次の日', disabled: d >= daysInMonth(y, m), onclick: () => actions.sheetStep(1) },

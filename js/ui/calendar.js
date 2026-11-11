@@ -3,7 +3,8 @@
 import { WEEKDAYS, monthWeeks, parseMonthKey, todayYmd, toYmd, weekdayOrder } from '../dates.js';
 import { monthStats, optionMap } from '../logic.js';
 import { monthNav, notice } from './common.js';
-import { chip, h, icon, weekdayClass } from './dom.js';
+import { holidayLabel } from './common.js';
+import { chip, dateClass, h, icon, weekdayClass } from './dom.js';
 
 // 塗りモードの「消す」
 export const ERASE = 'erase';
@@ -47,8 +48,8 @@ export function renderCalendar({ state, actions }) {
           return h(
             'button',
             {
-              class: ['cell', weekdayClass(wd), ymd === today && 'today', ymd === state.sheetDate && 'selected', !option && 'unset'],
-              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日 ${option ? option.label : '未入力'}`,
+              class: ['cell', dateClass(y, m, d), ymd === today && 'today', ymd === state.sheetDate && 'selected', !option && 'unset'],
+              'aria-label': `${m}月${d}日 ${WEEKDAYS[wd]}曜日${holidayLabel(ymd)} ${option ? option.label : '未入力'}`,
               onclick: () => actions.tapDay(ymd),
             },
             h('span', { class: 'num' }, d),

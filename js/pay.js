@@ -1,7 +1,8 @@
 // 確定シフトと給料の計算（画面に依存しない処理）。
 // 時刻はその日の0時からの分で持つ。25:00（翌1時）は 1500。
 
-import { addMonths, dayRange, daysInMonth, formatDay, parseMonthKey, toYmd } from './dates.js';
+import { addMonths, dayRange, daysInMonth, formatDay, parseMonthKey, parseYmd, toYmd, weekdayOf } from './dates.js';
+import { holidayName } from './holidays.js';
 
 export const NIGHT_PREMIUM = 0.25; // 深夜（22時〜翌5時）の割増
 export const OVERTIME_PREMIUM = 0.25; // 1日8時間を超えた分の割増
@@ -112,15 +113,27 @@ export function effectiveTimes(shift, rounding = 0) {
 }
 
 // 1日分の時給・時間・金額（金額は端数を丸める前）
+// 土日祝の時給アップ（円）。シフトの日付（始まりの日）で決める
+export function bonusOn(pay, ymd) {
+  const { amount, sat, sun, holiday } = pay.bonus;
+  if (!amount) return 0;
+  const { y, m, d } = parseYmd(ymd);
+  const wd = weekdayOf(y, m, d);
+  const applies = (sat && wd === 6) || (sun && wd === 0) || (holiday && holidayName(ymd) !== null);
+  return applies ? amount : 0;
+}
+
 export function dayPay(pay, ymd, shift) {
   const rules = { night: pay.nightPremium, overtime: pay.overtimePremium };
   const times = effectiveTimes(shift, pay.rounding);
   const minutes = shiftMinutes(times, rules);
-  const hourly = wageOn(pay, ymd);
+  const bonus = bonusOn(pay, ymd);
+  // 深夜・残業の割増も、土日祝の分を足した時給にかける
+  const hourly = wageOn(pay, ymd) + bonus;
   const amount = (hourly * (minutes.work + NIGHT_PREMIUM * minutes.night + OVERTIME_PREMIUM * minutes.overtime)) / 60;
   // 実績があるとき、予定と比べた勤務時間の差（分）
   const diff = shift.actual ? minutes.work - shiftMinutes(roundTimes(shift, pay.rounding), rules).work : 0;
-  return { hourly, ...minutes, amount, times, actual: Boolean(shift.actual), diff };
+  return { hourly, bonus, ...minutes, amount, times, actual: Boolean(shift.actual), diff };
 }
 
 // start〜end の確定シフトから給料を計算する。
@@ -128,7 +141,7 @@ export function dayPay(pay, ymd, shift) {
 export function payForRange(data, start, end) {
   const { pay } = data;
   const days = [];
-  const byWage = new Map(); // 時給 -> 勤務時間（分）
+  const byWage = new Map(); // 「時給・土日祝か」ごとの勤務時間（分）
   let night = 0;
   let overtime = 0;
   for (const ymd of dayRange(start, end)) {
@@ -136,11 +149,14 @@ export function payForRange(data, start, end) {
     if (!shift) continue;
     const day = dayPay(pay, ymd, shift);
     days.push({ ymd, shift, ...day });
-    byWage.set(day.hourly, (byWage.get(day.hourly) ?? 0) + day.work);
+    const key = `${day.hourly}:${day.bonus > 0}`;
+    const group = byWage.get(key) ?? { hourly: day.hourly, bonus: day.bonus > 0, minutes: 0 };
+    group.minutes += day.work;
+    byWage.set(key, group);
     night += (day.hourly * NIGHT_PREMIUM * day.night) / 60;
     overtime += (day.hourly * OVERTIME_PREMIUM * day.overtime) / 60;
   }
-  const wages = [...byWage].map(([hourly, minutes]) => ({ hourly, minutes, amount: Math.round((hourly * minutes) / 60) }));
+  const wages = [...byWage.values()].map((w) => ({ ...w, amount: Math.round((w.hourly * w.minutes) / 60) }));
   const parts = {
     base: wages.reduce((sum, w) => sum + w.amount, 0),
     night: Math.round(night),

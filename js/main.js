@@ -237,6 +237,11 @@ const actions = {
     persist();
     render();
   },
+  setBonus(key, value) {
+    state.data.pay.bonus[key] = value;
+    persist();
+    render();
+  },
   setBaseWage(hourly) {
     state.data.pay.wages[0].hourly = hourly;
     persist();

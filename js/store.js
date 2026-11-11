@@ -62,6 +62,7 @@ export function defaultPay() {
     payMonthOffset: 1, // 給料日: 0 = 当月, 1 = 翌月, 2 = 翌々月
     payDay: 25, // 給料日の日（0 = 月末）
     rounding: 0, // 出退勤の時刻の丸め（0 = 1分単位、15 / 30 = その単位で出勤は切り上げ・退勤は切り捨て）
+    bonus: { amount: 0, sat: true, sun: true, holiday: true }, // 土日祝の時給アップ（円）と、対象にする日
   };
 }
 
@@ -118,6 +119,7 @@ function normalizePay(raw) {
   if (!byDate.has('')) byDate.set('', 0);
   const wages = [...byDate].map(([from, hourly]) => ({ from, hourly })).sort((a, b) => (a.from < b.from ? -1 : 1));
   const d = defaultPay();
+  const bonus = isObject(p.bonus) ? p.bonus : {};
   return {
     wages,
     transportPerDay: int(p.transportPerDay, 0, 100000) ?? d.transportPerDay,
@@ -127,6 +129,12 @@ function normalizePay(raw) {
     payMonthOffset: int(p.payMonthOffset, 0, 2) ?? d.payMonthOffset,
     payDay: int(p.payDay, 0, 31) ?? d.payDay,
     rounding: ROUNDING_CHOICES.includes(p.rounding) ? p.rounding : d.rounding,
+    bonus: {
+      amount: int(bonus.amount, 0, 100000) ?? d.bonus.amount,
+      sat: bonus.sat !== false,
+      sun: bonus.sun !== false,
+      holiday: bonus.holiday !== false,
+    },
   };
 }
 

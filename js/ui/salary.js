@@ -1,9 +1,9 @@
 // 給料の画面（確定シフトから出した見込み）
 
-import { formatDay, parseMonthKey, parseYmd, weekdayOf } from '../dates.js';
+import { formatDay, parseMonthKey, parseYmd } from '../dates.js';
 import { formatDuration, formatRange, formatYen, periodPay, yearPay } from '../pay.js';
 import { monthNav, notice } from './common.js';
-import { h, weekdayClass } from './dom.js';
+import { dateClass, h } from './dom.js';
 
 const monthDay = (ymd) => {
   const { m, d } = parseYmd(ymd);
@@ -73,7 +73,9 @@ export function renderSalary({ state, actions }) {
     h(
       'div',
       { class: 'pay-rows' },
-      p.wages.map((w) => row(`基本給（${formatYen(w.hourly)} × ${formatDuration(w.minutes)}）`, formatYen(w.amount))),
+      p.wages.map((w) =>
+        row(`基本給（${w.bonus ? '土日祝 ' : ''}${formatYen(w.hourly)} × ${formatDuration(w.minutes)}）`, formatYen(w.amount)),
+      ),
       p.nightMinutes > 0 && row(`深夜手当（25%増し・${formatDuration(p.nightMinutes)}）`, formatYen(p.night)),
       p.overtimeMinutes > 0 && row(`残業手当（25%増し・${formatDuration(p.overtimeMinutes)}）`, formatYen(p.overtime)),
       data.pay.transportPerDay > 0 && row(`交通費（${formatYen(data.pay.transportPerDay)} × ${p.workDays}日）`, formatYen(p.transport)),
@@ -94,7 +96,7 @@ export function renderSalary({ state, actions }) {
         return h(
           'div',
           { class: 'pay-day' },
-          h('span', { class: ['date', weekdayClass(weekdayOf(y, m, d))] }, formatDay(y, m, d, 'M/D(W)')),
+          h('span', { class: ['date', dateClass(y, m, d)] }, formatDay(y, m, d, 'M/D(W)')),
           h(
             'span',
             { class: 'range' },
@@ -108,6 +110,7 @@ export function renderSalary({ state, actions }) {
             h('span', {}, formatDuration(day.work)),
             day.night > 0 && h('span', {}, `深夜 ${formatDuration(day.night)}`),
             h('span', {}, `休憩 ${day.times.breakMin ? formatDuration(day.times.breakMin) : 'なし'}`),
+            day.bonus > 0 && h('span', {}, `土日祝 時給${formatYen(day.hourly)}`),
             day.diff !== 0 && h('span', {}, `予定より ${day.diff > 0 ? '+' : '−'}${formatDuration(Math.abs(day.diff))}`),
           ),
         );
@@ -151,6 +154,7 @@ function note(pay) {
     { class: 'hint pay-note' },
     '実際の時間（実績）を入れた日は実績で、まだの日は予定の時間で計算。' +
       (pay.rounding ? `出退勤は${pay.rounding}分単位に丸めて計算（出勤は切り上げ・退勤は切り捨て）。` : '') +
+      (pay.bonus.amount ? `土日祝（設定で選んだ日）は時給を${pay.bonus.amount}円上げて計算（シフトの始まりの日で判定）。` : '') +
       '深夜（22時〜翌5時）と、1日8時間を超えた分は25%増し（設定で変えられる）。休憩は深夜以外の時間から取ったものとして計算。' +
       '給与明細と合わないときは、設定の時給・交通費・締め日・時刻の丸めと、休憩を見直してね',
   );
